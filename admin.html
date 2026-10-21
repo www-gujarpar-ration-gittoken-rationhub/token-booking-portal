@@ -120,7 +120,7 @@
             <div class="bg-purple-50 border border-purple-200 px-4 py-3 rounded-2xl flex items-center justify-between">
               <div>
                 <span class="text-[10px] font-bold text-purple-700 uppercase block">Active Display Token</span>
-                <span class="text-2xl font-black text-purple-950 font-['Poppins']" id="adminLiveDisplayToken">001</span>
+                <span class="text-2xl font-black text-purple-950 font-['Poppins']" id="adminLiveDisplayToken">000</span>
               </div>
               <button onclick="toggleLiveDisplayState()" id="adminDisplayToggleBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition">
                 Start
@@ -499,28 +499,39 @@
       lucide.createIcons();
     };
 
-    // Instant Realtime WebSocket listener for Live Display & Date sync
     function subscribeAdminLiveSync() {
       supabaseClient
         .channel('admin:live_display')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'live_display' }, payload => {
           if (payload.new) {
-            document.getElementById('adminLiveDisplayToken').innerText = String(payload.new.current_token || '001').padStart(3, '0');
-            var btn = document.getElementById('adminDisplayToggleBtn');
-            if (payload.new.is_running) {
-              btn.innerText = "Stop";
-              btn.className = "bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
-            } else {
-              btn.innerText = "Start";
-              btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
-            }
-            if (payload.new.active_date) {
-              var dateSelect = document.getElementById('activeDistributionDate');
-              if(dateSelect) dateSelect.value = payload.new.active_date;
-            }
+            updateAdminLiveDisplayUI(payload.new);
           }
         })
         .subscribe();
+    }
+
+    function updateAdminLiveDisplayUI(data) {
+      var rawTokenNum = data.current_token || 0;
+      let tokenDisplayStr = "000";
+      if (rawTokenNum && rawTokenNum > 0) {
+        tokenDisplayStr = String(rawTokenNum).padStart(3, '0');
+      }
+
+      document.getElementById('adminLiveDisplayToken').innerText = tokenDisplayStr;
+      var btn = document.getElementById('adminDisplayToggleBtn');
+      if (data.is_running) {
+        btn.innerText = "Stop";
+        btn.className = "bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
+      } else {
+        btn.innerText = "Start";
+        btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
+      }
+      if (data.active_date) {
+        var dateSelect = document.getElementById('activeDistributionDate');
+        if(dateSelect && dateSelect.value !== data.active_date) {
+          dateSelect.value = data.active_date;
+        }
+      }
     }
 
     async function checkPortalLiveStatusState() {
@@ -546,19 +557,7 @@
     async function fetchAdminLiveState() {
       const { data } = await supabaseClient.from('live_display').select('*').eq('id', 1).single();
       if (data) {
-        document.getElementById('adminLiveDisplayToken').innerText = String(data.current_token || '001').padStart(3, '0');
-        var btn = document.getElementById('adminDisplayToggleBtn');
-        if (data.is_running) {
-          btn.innerText = "Stop";
-          btn.className = "bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
-        } else {
-          btn.innerText = "Start";
-          btn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
-        }
-        if (data.active_date) {
-          var dateSelect = document.getElementById('activeDistributionDate');
-          if(dateSelect) dateSelect.value = data.active_date;
-        }
+        updateAdminLiveDisplayUI(data);
       }
     }
 
@@ -566,23 +565,48 @@
       const { data } = await supabaseClient.from('live_display').select('*').eq('id', 1).single();
       if (!data) return;
       let newState = !data.is_running;
+      
+      // INSTANT UI UPDATE FOR START/STOP BUTTON
+      document.getElementById('adminDisplayToggleBtn').innerText = newState ? "Stop" : "Start";
+      document.getElementById('adminDisplayToggleBtn').className = newState ? "bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition" : "bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition";
+
       await supabaseClient.from('live_display').update({ is_running: newState }).eq('id', 1);
-      fetchAdminLiveState();
     }
 
+    // ULTRA-FAST INSTANT OPTIMISTIC UI DATE & TOKEN SYNC
     async function updateActiveDistributionDate(dateVal) {
       if (!dateVal) return;
+      
+      // Step 1: Instant local UI feedback (Zero lag)
+      document.getElementById('adminLiveDisplayToken').innerText = "000";
+
+      // Step 2: Instant local lookup from cache to find the latest token for this date (No waiting for slow queries)
+      let targetToken = 0;
+      if (allBookingsData && allBookingsData.length > 0) {
+        let matching = allBookingsData.filter(function(b) {
+          return (b.token_date === dateVal || b.date === dateVal);
+        });
+        if (matching.length > 0) {
+          // Sort to find max token number instantly in memory
+          matching.sort(function(a, b) { return (b.token_number || 0) - (a.token_number || 0); });
+          targetToken = matching[0].token_number || 0;
+        }
+      }
+
+      let formattedStr = targetToken > 0 ? String(targetToken).padStart(3, '0') : "000";
+      document.getElementById('adminLiveDisplayToken').innerText = formattedStr;
+
+      // Step 3: Fast background server sync
       try {
-        const { error } = await supabaseClient.from('live_display').update({ active_date: dateVal }).eq('id', 1);
-        if (error) {
-          await supabaseClient.from('live_display').upsert({ id: 1, active_date: dateVal });
-        }
+        await supabaseClient.from('live_display').upsert({ 
+          id: 1, 
+          active_date: dateVal, 
+          current_token: targetToken,
+          is_running: true,
+          updated_at: new Date()
+        });
       } catch(e) {
-        try {
-          await supabaseClient.from('live_display').upsert({ id: 1, active_date: dateVal });
-        } catch(err2) {
-          console.error("Date update error:", err2);
-        }
+        console.error("Instant sync error:", e);
       }
     }
 
@@ -969,30 +993,35 @@
       lucide.createIcons();
     }
 
+    // ULTRA-FAST INSTANT 'DONE' ACTION WITH ZERO DELAY
     async function markTokenDoneAndSync(bookingId, tokenNum, newStatus) {
+      let numericToken = parseInt(tokenNum, 10) || 0;
+      
+      // Step 1: Instant local UI feedback (Zero wait)
+      document.getElementById('adminLiveDisplayToken').innerText = String(numericToken).padStart(3, '0');
+      
+      // Update booking row locally in memory immediately
+      let targetBooking = allBookingsData.find(function(b) { return b.id === bookingId; });
+      if (targetBooking) { targetBooking.status = newStatus; }
+      filterBookingsByDate();
+
+      // Step 2: Background server sync
       try {
-        let formattedToken = String(tokenNum).padStart(3, '0');
-        
-        const { error: bErr } = await supabaseClient.from('bookings').update({ status: newStatus }).eq('id', bookingId);
-        if (bErr) throw bErr;
-
-        const { error: lErr } = await supabaseClient.from('live_display').upsert({ id: 1, current_token: formattedToken, is_running: true, updated_at: new Date() });
-        if (lErr) throw lErr;
-
-        document.getElementById('adminLiveDisplayToken').innerText = formattedToken;
-        loadBookings();
+        await supabaseClient.from('bookings').update({ status: newStatus }).eq('id', bookingId);
+        await supabaseClient.from('live_display').upsert({ id: 1, current_token: numericToken, is_running: true, updated_at: new Date() });
       } catch (err) {
-        alert("Done update error: " + err.message);
+        console.error("Done update error:", err);
       }
     }
 
     async function toggleStatus(bookingId, newStatus) {
-      const { error } = await supabaseClient.from('bookings').update({ status: newStatus }).eq('id', bookingId);
-      if (error) {
-        alert('Status update karne mein error aayi: ' + error.message);
-      } else {
-        loadBookings();
-      }
+      let targetBooking = allBookingsData.find(function(b) { return b.id === bookingId; });
+      if (targetBooking) { targetBooking.status = newStatus; }
+      filterBookingsByDate();
+
+      try {
+        await supabaseClient.from('bookings').update({ status: newStatus }).eq('id', bookingId);
+      } catch(e) {}
     }
 
     function announceTokenShuddhHindi(fullToken, tokenNumber) {
