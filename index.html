@@ -55,10 +55,11 @@
     }
 
     .premium-card { 
-      background: linear-gradient(135deg, #eef6ff 0%, #fcfdff 60%, #e0f2fe 100%);
-      border: 1.5px solid rgba(255, 255, 255, 0.95); 
-      box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.35), inset 0 0 15px rgba(224, 242, 254, 0.6); 
-      border-radius: 1.75rem; 
+      background: linear-gradient(135deg, rgba(235, 245, 255, 0.96) 0%, rgba(255, 255, 255, 0.98) 60%, rgba(215, 238, 255, 0.96) 100%);
+      backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(147, 197, 253, 0.85); 
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4), inset 0 0 20px rgba(186, 230, 253, 0.5); 
+      border-radius: 1rem; 
     }
 
     .custom-input { background: #ffffff; border: 1.5px solid #cbd5e1; color: #0f172a; outline: none; font-family: 'Poppins', sans-serif; }
@@ -66,7 +67,7 @@
     
     .date-box { 
       border: 1.5px solid #cbd5e1; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-      background: #ffffff; border-radius: 1rem; font-family: 'Poppins', sans-serif;
+      background: #ffffff; border-radius: 0.75rem; font-family: 'Poppins', sans-serif;
     }
     .date-box:hover { transform: translateY(-2px); border-color: #701a75; box-shadow: 0 6px 15px -3px rgba(112, 26, 117, 0.15); }
     .date-box.selected { 
@@ -102,7 +103,6 @@
 </head>
 <body class="flex flex-col items-center min-h-screen pb-8">
 
-  <!-- पोर्टल बंद होने पर पूरी स्क्रीन सफेद, बैनर और Ban Icon के साथ -->
   <div id="portalClosedScreen" class="fixed inset-0 bg-white z-[99999] hidden flex flex-col items-center justify-center p-6 text-center space-y-4">
     <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center shadow-lg">
       <i data-lucide="ban" class="w-10 h-10"></i>
@@ -131,7 +131,6 @@
         </div>
       </div>
 
-      <!-- Small Live Token Counter LED Screen (Real-time synced) -->
       <div id="publicLiveBanner" class="w-full md:w-auto flex items-center justify-center my-1 md:my-0">
         <div class="digital-led-machine px-4 py-1 flex items-center gap-3">
           <div class="text-xl sm:text-2xl font-black font-['Poppins'] tracking-widest led-red-digits" id="publicLiveTokenVal">001</div>
@@ -174,7 +173,7 @@
           <div id="cardStatusMsg" class="hidden text-[11px] font-bold px-1 hindi-text"></div>
         </div>
 
-        <div id="multiMatchContainer" class="hidden bg-white border border-purple-200 p-3 rounded-2xl space-y-1.5 shadow-sm">
+        <div id="multiMatchContainer" class="hidden bg-white border border-purple-200 p-3 rounded-xl space-y-1.5 shadow-sm">
           <label class="block text-xs font-bold text-slate-900 hindi-text">इस कोड पर एक से अधिक नाम हैं, सही नाम चुनें:</label>
           <select id="multiMatchSelect" onchange="selectMatchedCard(this)" class="custom-input w-full p-2.5 rounded-xl text-xs font-bold bg-white outline-none">
             <option value="">-- नाम चुनें --</option>
@@ -189,15 +188,7 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 hindi-text">मोबाइल नंबर दर्ज करें (10 अंक)</label>
-          <div class="relative">
-            <i data-lucide="phone" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-            <input type="tel" id="userPhone" required maxlength="10" pattern="[0-9]{10}" inputmode="numeric" placeholder="XXXXXXXXXX" class="custom-input w-full pl-10 pr-3 py-2.5 rounded-xl text-xs font-semibold shadow-xs font-['Poppins'] tracking-wider" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
-          </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="btn-dark w-full py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition">
+        <button type="submit" id="submitBtn" class="btn-dark w-full py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition mt-2">
           <i data-lucide="sparkles" class="w-4 h-4"></i>
           <span class="hindi-text text-sm">टोकन बुक करें</span>
         </button>
@@ -236,7 +227,6 @@
             <p class="flex justify-between font-['Poppins']"><strong>Appointment Date:</strong> <span id="slipDate" class="font-bold text-black font-['Poppins']">-</span></p>
             <p class="flex justify-between font-['Poppins']"><strong>Ration Card No:</strong> <span id="slipRationNo" class="font-bold text-black font-['Poppins'] tracking-wider">-</span></p>
             <p class="flex justify-between font-['Poppins']"><strong>Name:</strong> <span id="slipName" class="font-bold text-black font-['Poppins']">-</span></p>
-            <p class="flex justify-between font-['Poppins']"><strong>Mobile:</strong> <span id="slipPhone" class="font-bold text-black font-['Poppins']">-</span></p>
             <p class="flex justify-between font-['Poppins']"><strong>Generated On:</strong> <span id="slipGeneratedOn" class="font-semibold text-slate-600 font-['Poppins']">-</span></p>
           </div>
 
@@ -259,13 +249,13 @@
   </main>
 
   <div id="findTokenModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 relative my-auto">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 relative my-auto">
       <button onclick="closeFindTokenModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 z-10">
         <i data-lucide="x" class="w-5 h-5"></i>
       </button>
       <div id="searchMainContent" class="space-y-4">
         <div class="text-center space-y-1">
-          <div class="w-12 h-12 bg-purple-100 text-[#701a75] rounded-2xl mx-auto flex items-center justify-center font-bold">
+          <div class="w-12 h-12 bg-purple-100 text-[#701a75] rounded-xl mx-auto flex items-center justify-center font-bold">
             <i data-lucide="search" class="w-6 h-6"></i>
           </div>
           <h2 class="font-black text-lg text-slate-900 hindi-text">अपना टोकन खोजें</h2>
@@ -277,7 +267,7 @@
             टोकन ढूंढें
           </button>
           
-          <div id="modalMultiMatchContainer" class="hidden bg-slate-50 border border-slate-300 p-3 rounded-2xl space-y-1.5 text-left">
+          <div id="modalMultiMatchContainer" class="hidden bg-slate-50 border border-slate-300 p-3 rounded-xl space-y-1.5 text-left">
             <label class="block text-xs font-bold text-slate-900 hindi-text">इस कोड पर एक से अधिक टोकन हैं, नाम चुनें:</label>
             <select id="modalMultiMatchSelect" onchange="selectModalMatchedBooking(this)" class="custom-input w-full p-2.5 rounded-xl text-xs font-bold bg-white outline-none">
               <option value="">-- नाम चुनें --</option>
@@ -289,7 +279,7 @@
       </div>
 
       <div id="searchResultSlipContainer" class="hidden space-y-4">
-        <div id="modalSlipCardElement" class="printable-slip rounded-3xl p-4 shadow-xl relative overflow-hidden scale-95 origin-top">
+        <div id="modalSlipCardElement" class="printable-slip rounded-2xl p-4 shadow-xl relative overflow-hidden scale-95 origin-top">
           <h2 class="slip-header-title text-center text-lg font-black tracking-tight text-slate-900 mb-2 border-b-2 pb-1.5 border-slate-200 relative z-10 font-['Poppins']">
             Appointment Token Slip
           </h2>
@@ -320,7 +310,6 @@
               <p class="flex justify-between font-['Poppins']"><strong>Appointment Date:</strong> <span id="modalSlipDate" class="font-bold text-black font-['Poppins']">-</span></p>
               <p class="flex justify-between font-['Poppins']"><strong>Ration Card No:</strong> <span id="modalSlipRationNo" class="font-bold text-black font-['Poppins'] tracking-wider">-</span></p>
               <p class="flex justify-between font-['Poppins']"><strong>Name:</strong> <span id="modalSlipName" class="font-bold text-black font-['Poppins']">-</span></p>
-              <p class="flex justify-between font-['Poppins']"><strong>Mobile:</strong> <span id="modalSlipPhone" class="font-bold text-black font-['Poppins']">-</span></p>
             </div>
           </div>
         </div>
@@ -398,7 +387,6 @@
       lucide.createIcons();
     }
 
-    // Realtime WebSocket Subscription with blank screen toggle on Stop
     function subscribeToLiveDisplay() {
       supabaseClient
         .channel('public:live_display')
@@ -437,7 +425,6 @@
           ledMachineBox.style.borderColor = "#1e293b";
         }
       } else {
-        // Stop hone par screen poori tarah black/blank ho jayegi
         tokenValElem.innerText = "";
         dateTextElem.innerText = "";
         if(ledMachineBox) {
@@ -698,7 +685,6 @@
 
       var secretCodeInput = document.getElementById('userSecretCode').value.trim();
       var userName = document.getElementById('userName').value.trim().toUpperCase();
-      var userPhone = document.getElementById('userPhone').value.trim();
 
       if (!userName) {
         alert('कृपया वैध 5 अंकों का कोड दर्ज करके नाम सत्यापित करें।');
@@ -734,7 +720,7 @@
           p_date: selectedDate,
           p_card: cardReference,
           p_name: userName,
-          p_phone: userPhone
+          p_phone: "N/A"
         });
 
         if (rpcErr) throw rpcErr;
@@ -746,7 +732,7 @@
         }
 
         var newTokenNumber = rpcData.token_number;
-        showSlipScreen(cardReference, userName, userPhone, newTokenNumber, selectedDate, isCurrentCardRed);
+        showSlipScreen(cardReference, userName, newTokenNumber, selectedDate, isCurrentCardRed);
 
       } catch (err) {
         alert('बुकिंग में त्रुटि: ' + err.message);
@@ -757,7 +743,7 @@
       }
     }
 
-    function showSlipScreen(cardNo, name, phone, tokenNum, dateStr, isRed) {
+    function showSlipScreen(cardNo, name, tokenNum, dateStr, isRed) {
       document.getElementById('bookingScreen').classList.add('hidden');
       document.getElementById('ticketScreen').classList.remove('hidden');
       document.body.classList.add('slip-pure-white-mode');
@@ -779,7 +765,6 @@
       document.getElementById('slipDate').innerText = hindiDateDisplay;
       document.getElementById('slipRationNo').innerText = maskedCard;
       document.getElementById('slipName').innerText = name;
-      document.getElementById('slipPhone').innerText = phone;
       document.getElementById('slipGeneratedOn').innerText = new Date().toLocaleString('hi-IN');
 
       var imgElem = document.getElementById('kotedarImg');
@@ -907,7 +892,6 @@
       document.getElementById('modalSlipDate').innerText = hindiDateDisplay;
       document.getElementById('modalSlipRationNo').innerText = maskedCard;
       document.getElementById('modalSlipName').innerText = booking.name;
-      document.getElementById('modalSlipPhone').innerText = booking.phone || '-';
 
       var modalImgElem = document.getElementById('modalKotedarImg');
       if (modalImgElem) { modalImgElem.crossOrigin = "anonymous"; modalImgElem.src = RAW_PHOTO_URL; }
